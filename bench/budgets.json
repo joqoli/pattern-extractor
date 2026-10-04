@@ -1,0 +1,21 @@
+# Bench budgets and benchmarks for the pattern extraction suite.
+
+{
+  "fast": {
+    "cpu": { "total_ms": 12000 },
+    "gpu": { "total_ms": 8000 }
+  },
+  "balanced": {
+    "cpu": { "total_ms": 18000 },
+    "gpu": { "total_ms": 12000 }
+  },
+  "quality": {
+    "cpu": { "total_ms": 32000 },
+    "gpu": { "total_ms": 20000 }
+  },
+  "quality_tolerance": {
+    "seam_score_delta": 0.05,
+    "vector_ssim_delta": 0.02,
+    "latency_p50_delta": 0.10
+  }
+}

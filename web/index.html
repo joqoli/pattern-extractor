@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pattern Extractor</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+      .card { background: #111827; border: 1px solid #334155; border-radius: 12px; padding: 1rem; max-width: 720px; }
+      button { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 0.7rem 1rem; cursor: pointer; }
+      input, select { width: 100%; margin-top: 0.4rem; margin-bottom: 1rem; padding: 0.6rem; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #f8fafc; }
+      .meta { color: #94a3b8; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Pattern Extractor Suite</h1>
+      <p class="meta">Local-first garment pattern extraction and vector export pipeline.</p>
+
+      <form id="extractForm">
+        <label>
+          Upload garment image
+          <input id="fileInput" type="file" accept="image/*" />
+        </label>
+        <label>
+          Preset
+          <select id="preset">
+            <option value="fast">fast</option>
+            <option value="balanced" selected>balanced</option>
+            <option value="quality">quality</option>
+          </select>
+        </label>
+        <button type="submit">Run pipeline</button>
+      </form>
+
+      <pre id="result" class="meta">Waiting for input...</pre>
+    </div>
+
+    <script>
+      async function checkHealth() {
+        try {
+          const res = await fetch('/health');
+          const data = await res.json();
+          document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          document.getElementById('result').textContent = 'Health check failed: ' + e;
+        }
+      }
+
+      document.getElementById('extractForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const file = document.getElementById('fileInput').files[0];
+        const preset = document.getElementById('preset').value;
+
+        const response = await fetch('/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preset, file_name: file ? file.name : null })
+        });
+
+        const data = await response.json();
+        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+      });
+
+      checkHealth();
+    </script>
+  </body>
+</html>
