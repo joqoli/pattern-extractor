@@ -1,0 +1,85 @@
+# dataset download and orchestration script
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+MANIFEST_PATH = Path(__file__).with_name("dataset_manifest.json")
+
+
+def load_manifest() -> dict[str, Any]:
+    with MANIFEST_PATH.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def write_manual_instructions(dataset: dict[str, Any], output_root: Path) -> Path:
+    target_dir = output_root / dataset["target_dir"]
+    target_dir.mkdir(parents=True, exist_ok=True)
+    readme = target_dir / "README.md"
+    readme.write_text(
+        "# {name}\n\n"
+        "This dataset requires a manual download because its license or access policy is not fully automated.\n\n"
+        "- URL: {url}\n"
+        "- Category: {category}\n"
+        "- License: {license}\n"
+        "- Notes: {notes}\n\n"
+        "## Download instructions\n\n"
+        "1. Visit the dataset page.\n"
+        "2. Review the license and terms of use.\n"
+        "3. Download the files into this directory.\n"
+        "4. Validate file integrity and convert the files to the repository's normalized format.\n"
+        "\n"
+        "This repository intentionally avoids auto-downloading restricted or manually licensed datasets without explicit permission.\n".format(
+            name=dataset["name"],
+            url=dataset["url"],
+            category=dataset["category"],
+            license=dataset["license"],
+            notes=dataset["notes"],
+        ),
+        encoding="utf-8",
+    )
+    return readme
+
+
+def iterate_datasets(categories: list[str] | None = None) -> list[dict[str, Any]]:
+    manifest = load_manifest()
+    datasets = manifest["datasets"]
+    if not categories:
+        return datasets
+    return [dataset for dataset in datasets if dataset["category"] in categories]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Download or prepare dataset sources for Pattern Extractor")
+    parser.add_argument("--output-root", default="./datasets", help="Directory root for downloaded datasets")
+    parser.add_argument("--category", choices=["embroidery", "texture", "fashion", "historical", "community"], action="append", default=None, help="Limit the download plan to a dataset category.")
+    parser.add_argument("--name", help="Limit to a single dataset by name.")
+    args = parser.parse_args()
+
+    output_root = Path(args.output_root).resolve()
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    datasets = iterate_datasets(args.category)
+    if args.name:
+        datasets = [dataset for dataset in datasets if dataset["name"] == args.name]
+
+    if not datasets:
+        print(f"No dataset entries matched the selected filters.", file=sys.stderr)
+        return 1
+
+    print(f"Preparing dataset workspace at {output_root}")
+    for dataset in datasets:
+        readme = write_manual_instructions(dataset, output_root)
+        print(f"[prepared] {dataset['name']} -> {readme.parent}")
+
+    print("\nDataset preparation complete. Manual downloads are intentionally staged here to respect license terms.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

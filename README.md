@@ -1,6 +1,6 @@
 # Pattern Extractor Suite
 
-This repository is the starter implementation for a local-first garment pattern extraction suite.
+This repository provides a local-first garment pattern extraction system with a CPU-safe baseline pipeline, vector export support, and a dataset acquisition workflow for embroidery, textile, and fashion sources.
 
 ## Quick start
 
@@ -8,24 +8,24 @@ This repository is the starter implementation for a local-first garment pattern 
 make dev
 ```
 
-Then open the UI at http://localhost:8000 or use the API directly at http://localhost:8000/health.
+Then open the local UI at http://localhost:8000.
 
-## Architecture
+## Dataset acquisition
 
-- `web/` front-end shell
-- `server/` FastAPI backend and pipeline stages
-- `tests/` validation suite
-- `docs/` design notes and roadmap
-- `bench/` benchmarking, budgets, fixtures
+The project includes a dataset workspace + automated preparation script for the sources described in `docs/DATASETS.md`.
 
-## Scope
+```bash
+make datasets
+```
 
-The project follows the design in `docs/PLAN.md` and supports a CPU-safe baseline pipeline:
+This creates the dataset directory layout and writes a manual download guide for each source. Some datasets require license review or manual downloads due to access restrictions.
 
-1. isolate garment
-2. flatten / normalize
-3. tile seamless pattern
-4. vectorize output
-5. save SVG/EPS/AI exports
+## Docker volume strategy
 
-The code here is intentionally structured for incremental completion by multiple AI agent tasks.
+The repo mounts a persistent dataset volume at `/datasets` in the backend container so benchmark, source, and training artifacts do not live in the application image.
+
+```bash
+docker compose up --build
+```
+
+The compose file exposes the workspace as a named volume mapped to `./datasets` on the host.
